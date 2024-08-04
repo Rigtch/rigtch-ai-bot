@@ -1,7 +1,10 @@
-import { EnvModule, EnvService } from '@config/env'
 import { DiscordModule } from '@discord-nestjs/core'
 import { Module } from '@nestjs/common'
 import { GatewayIntentBits } from 'discord.js'
+
+import { BotGateway } from './bot.gateway'
+
+import { EnvModule, EnvService } from '@config/env'
 
 @Module({
   imports: [
@@ -16,5 +19,6 @@ import { GatewayIntentBits } from 'discord.js'
       imports: [EnvModule],
     }),
   ],
+  providers: [BotGateway],
 })
 export class BotModule {}

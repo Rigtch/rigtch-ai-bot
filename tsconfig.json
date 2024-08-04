@@ -12,7 +12,7 @@
 
     /* Strictness */
     "strict": true,
-    "strictNullChecks": false,
+    "strictNullChecks": true,
     "strictBindCallApply": false,
     "noUncheckedIndexedAccess": true,
     "noImplicitAny": true,
