@@ -4,35 +4,33 @@ import { ChatOpenAI, OpenAIEmbeddings } from '@langchain/openai'
 import { Injectable } from '@nestjs/common'
 import { WebBrowser } from 'langchain/tools/webbrowser'
 import { RunnableSequence } from '@langchain/core/runnables'
-import type { BaseMessageChunk } from '@langchain/core/messages'
+import {
+  HumanMessage,
+  SystemMessage,
+  type BaseMessageChunk,
+} from '@langchain/core/messages'
 import {
   AgentExecutor,
   type AgentAction,
   type AgentFinish,
 } from 'langchain/agents'
-import { ChatPromptTemplate } from '@langchain/core/prompts'
+import {
+  ChatPromptTemplate,
+  MessagesPlaceholder,
+} from '@langchain/core/prompts'
+import { formatToOpenAIFunctionMessages } from 'langchain/agents/format_scratchpad'
+
+import type { AgentActionFunctions } from './types'
 
 import { EnvService } from '@config/env'
 
 @Injectable()
 export class ChatModel {
   private readonly embeddings = new OpenAIEmbeddings()
-  private readonly prompt = ChatPromptTemplate.fromTemplate(
-    `You are a music assistant. You are helpful and friendly. You can answer questions about music.
-  
-    You can only answer questions about music. You can't answer questions about anything else.
-  
-    You can only answer questions that are in the context of music. If you don't know the answer,  search the internet for the answer, but you can only use this tool once.
-  
-    Your answer should be extensive, detailed, comprehensive, informative and well verified.
-
-    {chat_history}
-  
-    {input}`
-  )
+  private readonly prompt: ChatPromptTemplate
 
   private readonly model: ChatOpenAI
-  private readonly tools: StructuredToolInterface[] = []
+  private readonly tools: StructuredToolInterface[]
   private readonly agent: RunnableSequence
   private readonly agentExecutor: AgentExecutor
 
@@ -51,7 +49,29 @@ export class ChatModel {
       new WebBrowser({ model: this.model, embeddings: this.embeddings }),
     ]
 
+    this.prompt = ChatPromptTemplate.fromMessages([
+      new MessagesPlaceholder('chat_history'),
+      new SystemMessage(
+        `You are a music assistant. You are helpful and friendly. You can answer questions about music.
+  
+        You have access to chat history, which contains all the messages that have been sent in the current conversation.
+    
+        If it seems that question is not related to music, try to search provided chat history for more context.
+      
+        You can only answer questions that are in the context of music. If you don't know the answer, search the internet for the answer, but you can only use this tool once.
+      
+        Your answer should be extensive, detailed, comprehensive, informative and well verified.`
+      ),
+      new HumanMessage('{input}'),
+      new MessagesPlaceholder('agent_scratchpad'),
+    ])
+
     this.agent = RunnableSequence.from([
+      {
+        input: ({ input }) => input,
+        agent_scratchpad: ({ steps }) => formatToOpenAIFunctionMessages(steps),
+        chat_history: ({ chat_history }) => chat_history,
+      } satisfies AgentActionFunctions,
       this.prompt,
       this.model,
       (input: BaseMessageChunk): AgentAction | AgentFinish => ({
@@ -66,6 +86,7 @@ export class ChatModel {
       agent: this.agent,
       tools: this.tools,
       returnIntermediateSteps: true,
+      verbose: true,
       maxIterations: 3,
       earlyStoppingMethod: 'force',
     })
