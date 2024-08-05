@@ -8,13 +8,12 @@ import {
   messageMockFactory,
   messagesCollectionMock,
 } from '@common/mocks'
-import { ChatFormatter, ChatService } from '@modules/chat'
+import { ChatService } from '@modules/chat'
 
 describe('BotChatGateway', () => {
   let moduleRef: TestingModule
   let botChatGateway: BotChatGateway
   let chatService: ChatService
-  let chatFormatter: ChatFormatter
 
   beforeEach(async () => {
     moduleRef = await Test.createTestingModule({
@@ -26,13 +25,11 @@ describe('BotChatGateway', () => {
             call: vi.fn(),
           },
         },
-        ChatFormatter,
       ],
     }).compile()
 
     botChatGateway = moduleRef.get(BotChatGateway)
     chatService = moduleRef.get(ChatService)
-    chatFormatter = moduleRef.get(ChatFormatter)
   })
 
   afterEach(async () => {
@@ -47,13 +44,9 @@ describe('BotChatGateway', () => {
     const sendTypingSpy = vi.fn()
 
     let callSpy: MockInstance
-    let formatHistorySpy: MockInstance
-    let splitResponseSpy: MockInstance
 
     beforeEach(() => {
       callSpy = vi.spyOn(chatService, 'call')
-      formatHistorySpy = vi.spyOn(chatFormatter, 'formatHistory')
-      splitResponseSpy = vi.spyOn(chatFormatter, 'splitResponse')
     })
 
     test('should call the chat service with the message content and the history', async () => {
@@ -80,9 +73,7 @@ describe('BotChatGateway', () => {
       ).toEqual(responseMock)
 
       expect(sendTypingSpy).toHaveBeenCalled()
-      expect(formatHistorySpy).toHaveBeenCalledWith(messagesCollectionMock)
       expect(callSpy).toHaveBeenCalledWith(content, formattedHistoryMock)
-      expect(splitResponseSpy).not.toHaveBeenCalled()
     })
 
     test('should split the response into chunks if it is longer than 2000 characters', async () => {
@@ -111,9 +102,7 @@ describe('BotChatGateway', () => {
       await botChatGateway.onMessageCreate(messageMock, messagesCollectionMock)
 
       expect(sendTypingSpy).toHaveBeenCalled()
-      expect(formatHistorySpy).toHaveBeenCalledWith(messagesCollectionMock)
       expect(callSpy).toHaveBeenCalledWith(content, formattedHistoryMock)
-      expect(splitResponseSpy).toHaveBeenCalledWith(response)
       expect(sendSpy).toHaveBeenCalledTimes(4)
       expect(replySpy).toHaveBeenCalledTimes(1)
     })

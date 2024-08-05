@@ -1,0 +1,18 @@
+import { AIMessage, HumanMessage } from '@langchain/core/messages'
+import type { Collection, Message } from 'discord.js'
+
+export const MESSAGES_LIMIT = 6
+
+export function formatHistory(
+  messagesCollection: Collection<string, Message<true>>
+) {
+  const firstMessages = messagesCollection.first(MESSAGES_LIMIT + 1)
+
+  firstMessages.shift()
+
+  return firstMessages.map(({ content, author }) => {
+    if (author.bot) return new AIMessage(content)
+
+    return new HumanMessage({ content, name: author.username })
+  })
+}
