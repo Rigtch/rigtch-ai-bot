@@ -1,24 +1,20 @@
 import { SerpAPI } from '@langchain/community/tools/serpapi'
+import { SystemMessage, type BaseMessageChunk } from '@langchain/core/messages'
+import {
+  ChatPromptTemplate,
+  MessagesPlaceholder,
+} from '@langchain/core/prompts'
+import { RunnableSequence } from '@langchain/core/runnables'
 import type { StructuredToolInterface } from '@langchain/core/tools'
 import { ChatOpenAI, OpenAIEmbeddings } from '@langchain/openai'
 import { Injectable } from '@nestjs/common'
-import { WebBrowser } from 'langchain/tools/webbrowser'
-import { RunnableSequence } from '@langchain/core/runnables'
-import {
-  HumanMessage,
-  SystemMessage,
-  type BaseMessageChunk,
-} from '@langchain/core/messages'
 import {
   AgentExecutor,
   type AgentAction,
   type AgentFinish,
 } from 'langchain/agents'
-import {
-  ChatPromptTemplate,
-  MessagesPlaceholder,
-} from '@langchain/core/prompts'
 import { formatToOpenAIFunctionMessages } from 'langchain/agents/format_scratchpad'
+import { WebBrowser } from 'langchain/tools/webbrowser'
 
 import type { AgentActionFunctions } from './types'
 
@@ -52,17 +48,20 @@ export class ChatModel {
     this.prompt = ChatPromptTemplate.fromMessages([
       new MessagesPlaceholder('chat_history'),
       new SystemMessage(
-        `You are a music assistant. You are helpful and friendly. You can answer questions about music.
-  
-        You have access to chat history, which contains all the messages that have been sent in the current conversation.
-    
-        If it seems that question is not related to music, try to search provided chat history for more context.
-      
-        You can only answer questions that are in the context of music. If you don't know the answer, search the internet for the answer, but you can only use this tool once.
-      
-        Your answer should be extensive, detailed, comprehensive, informative and well verified.`
+        `# Your personality:
+          - You are a helpful assistant.
+          - You are friendly and helpful.
+          - You can answer questions about music.
+          - You have access to chat history, which contains all the messages that have been sent in the current conversation.
+          - If it seems that question is not related to music, try to search provided chat history for more context.
+          - You can only answer questions that are in the context of music. If you don't know the answer, search the internet for the answer.
+          - Use google search results as a source of truth.
+          - Your answer should be extensive, detailed, comprehensive, informative and well verified.
+          - If someone corrects you try to verify your mistake and correct your answer.
+          - Keep in mind your mistakes and provide verified information.
+        `
       ),
-      new HumanMessage('{input}'),
+      ['user', '{input}'],
       new MessagesPlaceholder('agent_scratchpad'),
     ])
 
