@@ -1,9 +1,9 @@
 import { type TestingModule, Test } from '@nestjs/testing'
-import { AIMessage, HumanMessage } from '@langchain/core/messages'
 
 import { ChatModel } from './chat.model'
 import { ChatService } from './chat.service'
-import type { ChatHistory } from './types'
+
+import { formattedHistoryMock, messagesCollectionMock } from '@common/mocks'
 
 describe('ChatService', () => {
   let moduleRef: TestingModule
@@ -39,13 +39,6 @@ describe('ChatService', () => {
     test('should call the chat model with the message and chat history', async () => {
       const content = 'test content'
 
-      const chatHistory: ChatHistory = [
-        new HumanMessage({ content: 'test chat history' }),
-        new AIMessage({ content: 'test chat history' }),
-        new HumanMessage({ content: 'test chat history' }),
-        new AIMessage({ content: 'test chat history' }),
-      ]
-
       const message = 'test message'
 
       const invokeSpy = vi.spyOn(chatModel, 'invoke').mockResolvedValue({
@@ -54,10 +47,12 @@ describe('ChatService', () => {
         },
       })
 
-      expect(await chatService.call(message, chatHistory)).toEqual(content)
+      expect(await chatService.call(message, messagesCollectionMock)).toEqual(
+        content
+      )
       expect(invokeSpy).toHaveBeenCalledWith({
         input: message,
-        chat_history: chatHistory,
+        chat_history: formattedHistoryMock,
       })
     })
   })

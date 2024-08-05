@@ -3,11 +3,7 @@ import type { MockInstance } from 'vitest'
 
 import { BotChatGateway } from './bot-chat.gateway'
 
-import {
-  formattedHistoryMock,
-  messageMockFactory,
-  messagesCollectionMock,
-} from '@common/mocks'
+import { messageMockFactory, messagesCollectionMock } from '@common/mocks'
 import { ChatService } from '@modules/chat'
 
 describe('BotChatGateway', () => {
@@ -73,7 +69,7 @@ describe('BotChatGateway', () => {
       ).toEqual(responseMock)
 
       expect(sendTypingSpy).toHaveBeenCalled()
-      expect(callSpy).toHaveBeenCalledWith(content, formattedHistoryMock)
+      expect(callSpy).toHaveBeenCalledWith(content, messagesCollectionMock)
     })
 
     test('should split the response into chunks if it is longer than 2000 characters', async () => {
@@ -102,7 +98,7 @@ describe('BotChatGateway', () => {
       await botChatGateway.onMessageCreate(messageMock, messagesCollectionMock)
 
       expect(sendTypingSpy).toHaveBeenCalled()
-      expect(callSpy).toHaveBeenCalledWith(content, formattedHistoryMock)
+      expect(callSpy).toHaveBeenCalledWith(content, messagesCollectionMock)
       expect(sendSpy).toHaveBeenCalledTimes(4)
       expect(replySpy).toHaveBeenCalledTimes(1)
     })

@@ -7,7 +7,7 @@ export async function getChannelMessagesHistory(
 ) {
   const message = context.getArgByIndex<Message<true>>(0)
 
-  return await message.channel.messages.fetch()
+  return message.channel.messages.fetch()
 }
 
 export const ChannelMessagesHistory = createParamDecorator(

@@ -6,7 +6,7 @@ import { ChannelMessagesHistory } from '../decorators'
 import { MessageFromUserGuard } from '../guards'
 
 import { ChatService } from '@modules/chat'
-import { formatHistory, splitResponse } from '@modules/chat/helpers'
+import { splitResponse } from '@modules/chat/helpers'
 
 @Injectable()
 export class BotChatGateway {
@@ -23,7 +23,7 @@ export class BotChatGateway {
 
     const response = await this.chatService.call(
       message.content,
-      formatHistory(messagesHistory)
+      messagesHistory
     )
 
     if (!response) return
