@@ -3,7 +3,7 @@ import type { Collection, Message } from 'discord.js'
 import { CharacterTextSplitter } from 'langchain/text_splitter'
 
 export class ChatFormatter {
-  private readonly MESSAGES_LIMIT = 4
+  private readonly MESSAGES_LIMIT = 6
   private readonly CHUNK_SIZE = 2000
   private readonly CHUNK_SEPARATOR = '\n'
 
@@ -22,6 +22,7 @@ export class ChatFormatter {
   async splitResponse(response: string) {
     const splitter = new CharacterTextSplitter({
       chunkSize: this.CHUNK_SIZE,
+      chunkOverlap: 1,
       separator: this.CHUNK_SEPARATOR,
     })
 
