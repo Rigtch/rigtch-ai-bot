@@ -1,15 +1,8 @@
-import { Message } from 'discord.js'
-import { mock } from 'vitest-mock-extended'
 import type { ExecutionContext } from '@nestjs/common'
 
 import { MessageFromUserGuard } from './message-from-user.guard'
 
-const messageMockFactory = (isBot: boolean) =>
-  mock({
-    author: {
-      bot: isBot,
-    },
-  } as Message<true>)
+import { messageMockFactory } from '@common/mocks'
 
 describe('MessageFromUserGuard', () => {
   let messageFromUserGuard: MessageFromUserGuard
@@ -23,7 +16,9 @@ describe('MessageFromUserGuard', () => {
   })
 
   test('should return true if the message is from a user', () => {
-    const message = messageMockFactory(false)
+    const message = messageMockFactory({
+      bot: false,
+    })
 
     expect(
       messageFromUserGuard.canActivate({
@@ -33,7 +28,9 @@ describe('MessageFromUserGuard', () => {
   })
 
   test('should return false if the message is from a bot', () => {
-    const message = messageMockFactory(true)
+    const message = messageMockFactory({
+      bot: true,
+    })
 
     expect(
       messageFromUserGuard.canActivate({
