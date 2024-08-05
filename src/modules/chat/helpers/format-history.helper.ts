@@ -1,7 +1,7 @@
 import { AIMessage, HumanMessage } from '@langchain/core/messages'
 import type { Collection, Message } from 'discord.js'
 
-export const MESSAGES_LIMIT = 6
+export const MESSAGES_LIMIT = 10
 
 export function formatHistory(
   messagesCollection: Collection<string, Message<true>>
