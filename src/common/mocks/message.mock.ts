@@ -1,11 +1,15 @@
-import type { Message, User } from 'discord.js'
+import type { Message, TextBasedChannel, User } from 'discord.js'
 import { mock } from 'vitest-mock-extended'
 
 export const messageMockFactory = (
   author: Partial<Omit<User, 'toString' | 'valueOf'>>,
-  content?: string
+  content?: string,
+  channel?: Partial<Omit<TextBasedChannel, 'toString' | 'valueOf'>>,
+  reply?: () => Promise<Message<true>>
 ) =>
   mock({
     content,
     author,
-  } as Message<true>)
+    channel,
+    reply,
+  } as unknown as Message<true>)

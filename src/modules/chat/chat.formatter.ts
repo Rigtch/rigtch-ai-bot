@@ -27,8 +27,6 @@ export class ChatFormatter {
 
     const messageChunks = await splitter.createDocuments([response])
 
-    console.log(messageChunks.map(({ pageContent: content }) => content))
-
     return messageChunks.map(({ pageContent: content }) => content)
   }
 }
