@@ -21,6 +21,8 @@ export class BotChatGateway {
     @ChannelMessagesHistory()
     messagesHistory: Collection<string, Message<true>>
   ) {
+    await message.channel.sendTyping()
+
     const response = await this.chatService.call(
       message.content,
       this.chatFormatter.formatHistory(messagesHistory)

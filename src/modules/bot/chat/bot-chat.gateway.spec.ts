@@ -44,6 +44,8 @@ describe('BotChatGateway', () => {
   })
 
   describe('onMessageCreate', () => {
+    const sendTypingSpy = vi.fn()
+
     let callSpy: MockInstance
     let formatHistorySpy: MockInstance
     let splitResponseSpy: MockInstance
@@ -62,7 +64,10 @@ describe('BotChatGateway', () => {
         {
           bot: false,
         },
-        content
+        content,
+        {
+          sendTyping: sendTypingSpy,
+        }
       )
 
       callSpy.mockResolvedValue(responseMock)
@@ -73,6 +78,8 @@ describe('BotChatGateway', () => {
           messagesCollectionMock
         )
       ).toEqual(responseMock)
+
+      expect(sendTypingSpy).toHaveBeenCalled()
       expect(formatHistorySpy).toHaveBeenCalledWith(messagesCollectionMock)
       expect(callSpy).toHaveBeenCalledWith(content, formattedHistoryMock)
       expect(splitResponseSpy).not.toHaveBeenCalled()
@@ -94,6 +101,7 @@ describe('BotChatGateway', () => {
         content,
         {
           send: sendSpy,
+          sendTyping: sendTypingSpy,
         },
         replySpy
       )
@@ -102,6 +110,7 @@ describe('BotChatGateway', () => {
 
       await botChatGateway.onMessageCreate(messageMock, messagesCollectionMock)
 
+      expect(sendTypingSpy).toHaveBeenCalled()
       expect(formatHistorySpy).toHaveBeenCalledWith(messagesCollectionMock)
       expect(callSpy).toHaveBeenCalledWith(content, formattedHistoryMock)
       expect(splitResponseSpy).toHaveBeenCalledWith(response)
