@@ -63,7 +63,7 @@ export class ChatModel {
           - Your answer should be extensive, detailed, comprehensive, informative and well verified.
           - If someone corrects you try to verify your mistake and correct your answer.
           - Keep in mind your mistakes and provide verified information.
-          - Try to include the source of the information in your answer.
+          - Try to include the source of the information in your answer, provide link to the exact source fe. page with detailed information about artist.
         `
       ),
       ['user', '{input}'],
@@ -90,7 +90,7 @@ export class ChatModel {
       agent: this.agent,
       tools: this.tools,
       returnIntermediateSteps: true,
-      verbose: true,
+      // verbose: true,
       maxIterations: 3,
       earlyStoppingMethod: 'force',
     })
