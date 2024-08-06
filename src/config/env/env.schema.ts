@@ -3,6 +3,7 @@ import { z } from 'zod'
 export const envSchema = z.object({
   PORT: z.coerce.number().optional().default(4000),
   DISCORD_BOT_TOKEN: z.coerce.string(),
+  CHANNEL_ID: z.coerce.string(),
   LANGCHAIN_TRACING_V2: z.coerce.boolean().optional().default(true),
   LANGCHAIN_CALLBACKS_BACKGROUND: z.coerce.boolean().optional().default(true),
   LANGCHAIN_ENDPOINT: z.coerce.string(),

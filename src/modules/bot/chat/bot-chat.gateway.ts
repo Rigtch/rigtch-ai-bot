@@ -3,7 +3,10 @@ import { Injectable, UseGuards } from '@nestjs/common'
 import { Collection, type Message } from 'discord.js'
 
 import { ChannelMessagesHistory } from '../decorators'
-import { MessageFromUserGuard } from '../guards'
+import {
+  MessageFromRestrictedChannelGuard,
+  MessageFromUserGuard,
+} from '../guards'
 
 import { ChatService } from '@modules/chat'
 import { splitResponse } from '@modules/chat/helpers'
@@ -13,7 +16,7 @@ export class BotChatGateway {
   constructor(private readonly chatService: ChatService) {}
 
   @On('messageCreate')
-  @UseGuards(MessageFromUserGuard)
+  @UseGuards(MessageFromUserGuard, MessageFromRestrictedChannelGuard)
   async onMessageCreate(
     @MessageEvent() message: Message<true>,
     @ChannelMessagesHistory()

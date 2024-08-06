@@ -5,6 +5,7 @@ import { BotChatGateway } from './bot-chat.gateway'
 
 import { messageMockFactory, messagesCollectionMock } from '@common/mocks'
 import { ChatService } from '@modules/chat'
+import { EnvService } from '@config/env'
 
 describe('BotChatGateway', () => {
   let moduleRef: TestingModule
@@ -19,6 +20,12 @@ describe('BotChatGateway', () => {
           provide: ChatService,
           useValue: {
             call: vi.fn(),
+          },
+        },
+        {
+          provide: EnvService,
+          useValue: {
+            get: vi.fn(),
           },
         },
       ],

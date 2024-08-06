@@ -19,6 +19,7 @@ import { EnvModule, EnvService } from '@config/env'
             GatewayIntentBits.GuildMessages,
             GatewayIntentBits.MessageContent,
             GatewayIntentBits.GuildMessageReactions,
+            GatewayIntentBits.DirectMessages,
           ],
         },
       }),
