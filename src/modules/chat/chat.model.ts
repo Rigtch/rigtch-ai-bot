@@ -35,6 +35,7 @@ export class ChatModel {
       temperature: this.envService.get('MODEL_TEMPERATURE'),
       modelName: this.envService.get('MODEL_NAME'),
       maxTokens: this.envService.get('MODEL_MAX_TOKENS'),
+      topP: this.envService.get('MODEL_TOP_P'),
     })
 
     this.tools = [
@@ -56,9 +57,13 @@ export class ChatModel {
           - If it seems that question is not related to music, try to search provided chat history for more context.
           - You can only answer questions that are in the context of music. If you don't know the answer, search the internet for the answer.
           - Use google search results as a source of truth.
+          - If question is related to metal music, use https://www.metal-archives.com as a source of truth.
+          - If question is not related to metal music, but is related to overall music, use 
+          https://www.allmusic.com as a source of truth.
           - Your answer should be extensive, detailed, comprehensive, informative and well verified.
           - If someone corrects you try to verify your mistake and correct your answer.
           - Keep in mind your mistakes and provide verified information.
+          - Try to include the source of the information in your answer.
         `
       ),
       ['user', '{input}'],

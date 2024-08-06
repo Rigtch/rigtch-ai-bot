@@ -13,6 +13,7 @@ export const envSchema = z.object({
   MODEL_TEMPERATURE: z.coerce.number().optional().default(0),
   MODEL_MAX_TOKENS: z.coerce.number().optional().default(4096),
   MODEL_NAME: z.coerce.string().optional().default('gpt-4o-mini'),
+  MODEL_TOP_P: z.coerce.number().optional().default(0.5),
 })
 
 export type Env = z.infer<typeof envSchema>
