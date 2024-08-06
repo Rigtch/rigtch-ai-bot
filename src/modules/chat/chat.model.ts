@@ -15,6 +15,7 @@ import {
 } from 'langchain/agents'
 import { formatToOpenAIFunctionMessages } from 'langchain/agents/format_scratchpad'
 import { WebBrowser } from 'langchain/tools/webbrowser'
+import { WikipediaQueryRun } from '@langchain/community/tools/wikipedia_query_run'
 
 import type { AgentActionFunctions } from './types'
 
@@ -44,6 +45,10 @@ export class ChatModel {
         gl: 'us',
       }),
       new WebBrowser({ model: this.model, embeddings: this.embeddings }),
+      new WikipediaQueryRun({
+        topKResults: 3,
+        maxDocContentLength: 4000,
+      }),
     ]
 
     this.prompt = ChatPromptTemplate.fromMessages([
@@ -60,6 +65,7 @@ export class ChatModel {
           - If question is related to metal music, use https://www.metal-archives.com as a source of truth.
           - If question is not related to metal music, but is related to overall music, use 
           https://www.allmusic.com as a source of truth.
+          - If you cannot find information you looking for in sources provided about, try to use wikipedia.
           - Your answer should be extensive, detailed, comprehensive, informative and well verified.
           - If someone corrects you try to verify your mistake and correct your answer.
           - Keep in mind your mistakes and provide verified information.
@@ -90,7 +96,7 @@ export class ChatModel {
       agent: this.agent,
       tools: this.tools,
       returnIntermediateSteps: true,
-      // verbose: true,
+      verbose: true,
       maxIterations: 3,
       earlyStoppingMethod: 'force',
     })
