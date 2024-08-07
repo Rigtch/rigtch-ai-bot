@@ -5,7 +5,8 @@ import { ChatModel } from './chat.model'
 import { EnvService } from '@config/env'
 
 vi.stubEnv('OPENAI_API_KEY', 'test')
-vi.stubEnv('SERPAPI_API_KEY', 'test')
+vi.stubEnv('GOOGLE_API_KEY', 'test')
+vi.stubEnv('GOOGLE_CSE_ID', 'test')
 
 vi.mock('langchain/agents', () => {
   const AgentExecutor = vi.fn().mockReturnValue({

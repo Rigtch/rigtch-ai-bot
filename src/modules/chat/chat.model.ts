@@ -1,4 +1,3 @@
-import { SerpAPI } from '@langchain/community/tools/serpapi'
 import { WikipediaQueryRun } from '@langchain/community/tools/wikipedia_query_run'
 import { SystemMessage } from '@langchain/core/messages'
 import {
@@ -11,6 +10,7 @@ import { ChatOpenAI, OpenAIEmbeddings } from '@langchain/openai'
 import { Injectable } from '@nestjs/common'
 import { AgentExecutor, createToolCallingAgent } from 'langchain/agents'
 import { WebBrowser } from 'langchain/tools/webbrowser'
+import { GoogleCustomSearch } from '@langchain/community/tools/google_custom_search'
 
 import type { ChatResponse } from './types'
 
@@ -34,10 +34,7 @@ export class ChatModel {
     })
 
     this.tools = [
-      new SerpAPI(this.envService.get('SERPAPI_API_KEY'), {
-        hl: 'en',
-        gl: 'us',
-      }),
+      new GoogleCustomSearch(),
       new WebBrowser({ model: this.model, embeddings: new OpenAIEmbeddings() }),
       new WikipediaQueryRun({
         topKResults: 3,
