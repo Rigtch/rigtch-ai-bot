@@ -16,6 +16,7 @@ vi.mock('langchain/agents', () => {
     AgentExecutor: Object.assign(AgentExecutor, {
       fromAgentAndTools: AgentExecutor,
     }),
+    createToolCallingAgent: vi.fn(),
   }
 })
 

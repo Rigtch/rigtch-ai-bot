@@ -12,12 +12,20 @@ export class ChatService {
 
   async call(message: string, chatHistory: Collection<string, Message<true>>) {
     try {
+      this.logger.log(`User input: ${message}`)
+
       const response = await this.chatModel.invoke({
         input: message,
-        chat_history: formatHistory(chatHistory),
+        chatHistory: formatHistory(chatHistory),
       })
 
-      return response.output.content as string
+      if (response.intermediateSteps.length > 0) {
+        this.logger.log(
+          `Used tools: ${response.intermediateSteps.map(({ action }) => action.tool).join(', ')}`
+        )
+      }
+
+      return response.output
     } catch (error) {
       this.logger.error(error)
     }

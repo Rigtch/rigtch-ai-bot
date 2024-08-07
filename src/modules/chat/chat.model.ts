@@ -1,29 +1,23 @@
 import { SerpAPI } from '@langchain/community/tools/serpapi'
-import { SystemMessage, type BaseMessageChunk } from '@langchain/core/messages'
+import { WikipediaQueryRun } from '@langchain/community/tools/wikipedia_query_run'
+import { SystemMessage } from '@langchain/core/messages'
 import {
   ChatPromptTemplate,
   MessagesPlaceholder,
 } from '@langchain/core/prompts'
 import { RunnableSequence } from '@langchain/core/runnables'
-import type { StructuredToolInterface } from '@langchain/core/tools'
+import { type StructuredToolInterface } from '@langchain/core/tools'
 import { ChatOpenAI, OpenAIEmbeddings } from '@langchain/openai'
 import { Injectable } from '@nestjs/common'
-import {
-  AgentExecutor,
-  type AgentAction,
-  type AgentFinish,
-} from 'langchain/agents'
-import { formatToOpenAIFunctionMessages } from 'langchain/agents/format_scratchpad'
+import { AgentExecutor, createToolCallingAgent } from 'langchain/agents'
 import { WebBrowser } from 'langchain/tools/webbrowser'
-import { WikipediaQueryRun } from '@langchain/community/tools/wikipedia_query_run'
 
-import type { AgentActionFunctions } from './types'
+import type { ChatResponse } from './types'
 
 import { EnvService } from '@config/env'
 
 @Injectable()
 export class ChatModel {
-  private readonly embeddings = new OpenAIEmbeddings()
   private readonly prompt: ChatPromptTemplate
 
   private readonly model: ChatOpenAI
@@ -44,65 +38,58 @@ export class ChatModel {
         hl: 'en',
         gl: 'us',
       }),
-      new WebBrowser({ model: this.model, embeddings: this.embeddings }),
+      new WebBrowser({ model: this.model, embeddings: new OpenAIEmbeddings() }),
       new WikipediaQueryRun({
         topKResults: 3,
         maxDocContentLength: 4000,
       }),
     ]
 
+    this.model.bindTools(this.tools)
+
     this.prompt = ChatPromptTemplate.fromMessages([
-      new MessagesPlaceholder('chat_history'),
+      new MessagesPlaceholder('chatHistory'),
       new SystemMessage(
         `# Your personality:
-          - You are a helpful assistant.
-          - You are friendly and helpful.
-          - You can answer questions about music.
+          - You are a music assistant.
+          - You provide accurate information about music.
           - You have access to chat history, which contains all the messages that have been sent in the current conversation.
-          - If it seems that question is not related to music, try to search provided chat history for more context.
+          - Use only well verified information.
+          - If there is something you do not know, use external tools.
+          - It is preferred to use multiple sources of information.
+          - Do not send unverified information.
           - You can only answer questions that are in the context of music. If you don't know the answer, search the internet for the answer.
           - Use google search results as a source of truth.
           - If question is related to metal music, use https://www.metal-archives.com as a source of truth.
-          - If question is not related to metal music, but is related to overall music, use 
+          - If question is not related to metal music, but is related to overall music, use
           https://www.allmusic.com as a source of truth.
           - If you cannot find information you looking for in sources provided about, try to use wikipedia.
-          - Your answer should be extensive, detailed, comprehensive, informative and well verified.
-          - If someone corrects you try to verify your mistake and correct your answer.
-          - Keep in mind your mistakes and provide verified information.
-          - Try to include the source of the information in your answer, provide link to the exact source fe. page with detailed information about artist.
-        `
+          - Something there might be multiple bands or artists with the same name. If you are not sure which is one the user specifically wants, you can ask the user to clarify.
+          - Always provide sources of information, more sources are better. Remember to provide links to the exact source.
+          - If someone corrects you try to verify your mistake and correct your answer. Then use saveMistakeToVectorStore tool to save your correction to vector store.
+          `
       ),
       ['user', '{input}'],
       new MessagesPlaceholder('agent_scratchpad'),
     ])
 
-    this.agent = RunnableSequence.from([
-      {
-        input: ({ input }) => input,
-        agent_scratchpad: ({ steps }) => formatToOpenAIFunctionMessages(steps),
-        chat_history: ({ chat_history }) => chat_history,
-      } satisfies AgentActionFunctions,
-      this.prompt,
-      this.model,
-      (input: BaseMessageChunk): AgentAction | AgentFinish => ({
-        log: 'test',
-        returnValues: {
-          output: input,
-        },
-      }),
-    ])
+    this.agent = createToolCallingAgent({
+      tools: this.tools,
+      llm: this.model,
+      prompt: this.prompt,
+    })
 
     this.agentExecutor = AgentExecutor.fromAgentAndTools({
       agent: this.agent,
       tools: this.tools,
       returnIntermediateSteps: true,
-      verbose: true,
-      maxIterations: 3,
+      // verbose: true,
+      maxIterations: 10,
       earlyStoppingMethod: 'force',
     })
   }
 
   invoke(...args: Parameters<AgentExecutor['invoke']>) {
-    return this.agentExecutor.invoke(...args)
+    return this.agentExecutor.invoke(...args) as Promise<ChatResponse>
   }
 }
