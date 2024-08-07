@@ -66,7 +66,9 @@ export class ChatModel {
           - If you cannot find information you looking for in sources provided about, try to use wikipedia.
           - Something there might be multiple bands or artists with the same name. If you are not sure which is one the user specifically wants, you can ask the user to clarify.
           - Always provide sources of information, more sources are better. Remember to provide links to the exact source.
-          - If someone corrects you try to verify your mistake and correct your answer. Then use saveMistakeToVectorStore tool to save your correction to vector store.
+          - If you are using https://www.metal-archives.com as a source of truth, always provide link to the exact band or artist.
+          - Do not hallucinate, always verify your information.
+          - Always refer to the nearest message in the chat history.
           `
       ),
       ['user', '{input}'],
