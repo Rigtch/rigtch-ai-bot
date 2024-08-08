@@ -4,6 +4,8 @@ import type { Document } from '@langchain/core/documents'
 
 import { ChatVectorStore } from './chat.vector-store'
 
+vi.stubEnv('OPENAI_API_KEY', 'test')
+
 vi.mock('@langchain/community/vectorstores/typeorm', () => {
   const TypeORMVectorStore = vi.fn().mockReturnValue({
     asRetriever: vi.fn().mockReturnValue({}),
