@@ -16,6 +16,11 @@ export const envSchema = z.object({
   MODEL_MAX_TOKENS: z.coerce.number().optional().default(4096),
   MODEL_NAME: z.coerce.string().optional().default('gpt-4o-mini'),
   MODEL_TOP_P: z.coerce.number().optional().default(0.5),
+  DATABASE_HOST: z.coerce.string(),
+  DATABASE_PORT: z.coerce.number().optional().default(5432),
+  DATABASE_USERNAME: z.coerce.string(),
+  DATABASE_PASSWORD: z.coerce.string(),
+  DATABASE_NAME: z.coerce.string(),
 })
 
 export type Env = z.infer<typeof envSchema>
