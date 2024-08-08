@@ -1,5 +1,6 @@
 import { GoogleCustomSearch } from '@langchain/community/tools/google_custom_search'
 import { WikipediaQueryRun } from '@langchain/community/tools/wikipedia_query_run'
+import { Document } from '@langchain/core/documents'
 import { SystemMessage } from '@langchain/core/messages'
 import {
   ChatPromptTemplate,
@@ -13,15 +14,14 @@ import {
 import { ChatOpenAI } from '@langchain/openai'
 import { Injectable, Logger, type OnApplicationBootstrap } from '@nestjs/common'
 import { AgentExecutor, createToolCallingAgent } from 'langchain/agents'
+import { createRetrieverTool } from 'langchain/tools/retriever'
 import { WebBrowser } from 'langchain/tools/webbrowser'
 import { z } from 'zod'
-import { Document } from '@langchain/core/documents'
-import { createRetrieverTool } from 'langchain/tools/retriever'
 
 import type { ChatResponse } from './types'
-import { ChatVectorStore } from './chat.vector-store'
 
 import { EnvService } from '@config/env'
+import { DocumentsVectorStore } from '@modules/documents'
 
 @Injectable()
 export class ChatModel implements OnApplicationBootstrap {
@@ -36,7 +36,7 @@ export class ChatModel implements OnApplicationBootstrap {
 
   constructor(
     private readonly envService: EnvService,
-    private readonly chatVectorStore: ChatVectorStore
+    private readonly documentsVectorStore: DocumentsVectorStore
   ) {}
 
   onApplicationBootstrap() {
@@ -48,7 +48,7 @@ export class ChatModel implements OnApplicationBootstrap {
     })
 
     this.tools = [
-      createRetrieverTool(this.chatVectorStore.retriever, {
+      createRetrieverTool(this.documentsVectorStore.retriever, {
         name: 'searchVectorStore',
         description:
           'Searches the vector store for various information about music.',
@@ -56,7 +56,7 @@ export class ChatModel implements OnApplicationBootstrap {
       new GoogleCustomSearch(),
       new WebBrowser({
         model: this.model,
-        embeddings: this.chatVectorStore.embeddings,
+        embeddings: this.documentsVectorStore.embeddings,
       }),
       new WikipediaQueryRun({
         topKResults: 3,
@@ -79,7 +79,7 @@ export class ChatModel implements OnApplicationBootstrap {
             pageContent: correction,
           })
 
-          await this.chatVectorStore.addDocuments([document])
+          await this.documentsVectorStore.addDocuments([document])
 
           return 'success'
         },
