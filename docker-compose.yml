@@ -1,0 +1,35 @@
+version: '3.8'
+
+services:
+  bot:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: development
+    command: yarn start:dev
+    ports:
+      - ${PORT}:${PORT}
+    env_file:
+      - .env
+    volumes:
+      - .:/usr/app/src
+      - /usr/app/src/node_modules
+    depends_on:
+      - pgvector
+
+  pgvector:
+    image: ankane/pgvector
+    ports:
+      - ${DATABASE_PORT}:${DATABASE_PORT}
+    environment:
+      POSTGRES_USER: ${DATABASE_USERNAME}
+      POSTGRES_PASSWORD: ${DATABASE_PASSWORD}
+      POSTGRES_DB: ${DATABASE_NAME}
+
+    volumes:
+      - 'postgresql_data:/bitnami/postgresql'
+      - ./docker-postgres-init.sql:/docker-entrypoint-initdb.d/docker-postgres-init.sql
+
+volumes:
+  postgresql_data:
+    driver: local
