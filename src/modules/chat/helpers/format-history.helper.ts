@@ -10,6 +10,8 @@ export function formatHistory(
 
   firstMessages.shift()
 
+  firstMessages.reverse()
+
   return firstMessages.map(({ content, author }) => {
     if (author.bot) return new AIMessage(content)
 
