@@ -1,3 +1,4 @@
+import { GoogleCustomSearch } from '@langchain/community/tools/google_custom_search'
 import { WikipediaQueryRun } from '@langchain/community/tools/wikipedia_query_run'
 import { SystemMessage } from '@langchain/core/messages'
 import {
@@ -5,27 +6,40 @@ import {
   MessagesPlaceholder,
 } from '@langchain/core/prompts'
 import { RunnableSequence } from '@langchain/core/runnables'
-import { type StructuredToolInterface } from '@langchain/core/tools'
-import { ChatOpenAI, OpenAIEmbeddings } from '@langchain/openai'
-import { Injectable } from '@nestjs/common'
+import {
+  DynamicStructuredTool,
+  type StructuredToolInterface,
+} from '@langchain/core/tools'
+import { ChatOpenAI } from '@langchain/openai'
+import { Injectable, Logger, type OnApplicationBootstrap } from '@nestjs/common'
 import { AgentExecutor, createToolCallingAgent } from 'langchain/agents'
 import { WebBrowser } from 'langchain/tools/webbrowser'
-import { GoogleCustomSearch } from '@langchain/community/tools/google_custom_search'
+import { z } from 'zod'
+import { Document } from '@langchain/core/documents'
+import { createRetrieverTool } from 'langchain/tools/retriever'
 
 import type { ChatResponse } from './types'
+import { ChatVectorStore } from './chat.vector-store'
 
 import { EnvService } from '@config/env'
 
 @Injectable()
-export class ChatModel {
-  private readonly prompt: ChatPromptTemplate
+export class ChatModel implements OnApplicationBootstrap {
+  private readonly logger = new Logger(ChatModel.name)
 
-  private readonly model: ChatOpenAI
-  private readonly tools: StructuredToolInterface[]
-  private readonly agent: RunnableSequence
-  private readonly agentExecutor: AgentExecutor
+  private prompt: ChatPromptTemplate
 
-  constructor(private readonly envService: EnvService) {
+  private model: ChatOpenAI
+  private tools: StructuredToolInterface[]
+  private agent: RunnableSequence
+  private agentExecutor: AgentExecutor
+
+  constructor(
+    private readonly envService: EnvService,
+    private readonly chatVectorStore: ChatVectorStore
+  ) {}
+
+  onApplicationBootstrap() {
     this.model = new ChatOpenAI({
       temperature: this.envService.get('MODEL_TEMPERATURE'),
       modelName: this.envService.get('MODEL_NAME'),
@@ -34,11 +48,41 @@ export class ChatModel {
     })
 
     this.tools = [
+      createRetrieverTool(this.chatVectorStore.retriever, {
+        name: 'searchVectorStore',
+        description:
+          'Searches the vector store for various information about music.',
+      }),
       new GoogleCustomSearch(),
-      new WebBrowser({ model: this.model, embeddings: new OpenAIEmbeddings() }),
+      new WebBrowser({
+        model: this.model,
+        embeddings: this.chatVectorStore.embeddings,
+      }),
       new WikipediaQueryRun({
         topKResults: 3,
         maxDocContentLength: 4000,
+      }),
+      new DynamicStructuredTool({
+        name: 'saveToVectorStore',
+        description: 'Saves the input to the vector store',
+        schema: z.object({
+          correction: z
+            .string()
+            .describe(
+              'Correction from the user that should include a link to the source'
+            ),
+        }),
+        func: async ({ correction }) => {
+          this.logger.log(`Saving correction to vector store: ${correction}`)
+
+          const document = new Document({
+            pageContent: correction,
+          })
+
+          await this.chatVectorStore.addDocuments([document])
+
+          return 'success'
+        },
       }),
     ]
 
@@ -54,6 +98,7 @@ export class ChatModel {
           - You can only answer questions that are in the context of music.
           - You have access to the chat history, which contains all the messages that have been sent in the current conversation.
           - Refer always to the nearest message in the chat history.
+          - You can use the "searchVectorStore" tool to search the vector store for various information about music.
           - If question is related to metal music, use https://www.metal-archives.com as a source of truth. You can also use wikipedia and google search results.
           - If question is not related to metal music, but is related to overall music, use https://www.allmusic.com as a source of truth. You can also use wikipedia and google search results.
           - Something there might be multiple bands or artists with the same name. If you are not sure which is one the user specifically wants, you can ask the user to clarify.
@@ -62,6 +107,7 @@ export class ChatModel {
           - Do not hallucinate, always verify your information.
           - Your answers should be comprehensive and contain the most important information.
           - If you are sending some links always wrap them with <>. fe. <http://google.com/>
+          - If there was some misunderstanding in user input and not chat history, someone corrected you or provided you a link to the band that he was referring to, use "saveToVectorStore" tool to save the correction with valid links to the vector store.
         `
       ),
       ['user', '{input}'],

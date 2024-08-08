@@ -1,6 +1,7 @@
 import { Test, type TestingModule } from '@nestjs/testing'
 
 import { ChatModel } from './chat.model'
+import { ChatVectorStore } from './chat.vector-store'
 
 import { EnvService } from '@config/env'
 
@@ -35,6 +36,13 @@ describe('ChatModel', () => {
             get: vi.fn(),
           },
         },
+        {
+          provide: ChatVectorStore,
+          useValue: {
+            retriever: {},
+            embeddings: {},
+          },
+        },
       ],
     }).compile()
 
@@ -54,6 +62,8 @@ describe('ChatModel', () => {
       const chainValues = {
         input: 'test',
       }
+
+      chatModel.onApplicationBootstrap()
 
       chatModel.invoke(chainValues)
 
