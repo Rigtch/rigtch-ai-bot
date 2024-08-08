@@ -1,9 +1,9 @@
 import { Test, type TestingModule } from '@nestjs/testing'
 
 import { ChatModel } from './chat.model'
-import { ChatVectorStore } from './chat.vector-store'
 
 import { EnvService } from '@config/env'
+import { DocumentsVectorStore } from '@modules/documents'
 
 vi.stubEnv('OPENAI_API_KEY', 'test')
 vi.stubEnv('GOOGLE_API_KEY', 'test')
@@ -37,7 +37,7 @@ describe('ChatModel', () => {
           },
         },
         {
-          provide: ChatVectorStore,
+          provide: DocumentsVectorStore,
           useValue: {
             retriever: {},
             embeddings: {},

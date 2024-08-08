@@ -2,10 +2,12 @@ import { Module } from '@nestjs/common'
 
 import { ChatModel } from './chat.model'
 import { ChatService } from './chat.service'
-import { ChatVectorStore } from './chat.vector-store'
+
+import { DocumentsModule } from '@modules/documents'
 
 @Module({
-  providers: [ChatModel, ChatService, ChatVectorStore],
+  imports: [DocumentsModule],
+  providers: [ChatModel, ChatService],
   exports: [ChatService],
 })
 export class ChatModule {}

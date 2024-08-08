@@ -2,7 +2,7 @@ import { Test, type TestingModule } from '@nestjs/testing'
 import { mock } from 'vitest-mock-extended'
 import type { Document } from '@langchain/core/documents'
 
-import { ChatVectorStore } from './chat.vector-store'
+import { DocumentsVectorStore } from './documents.vector-store'
 
 vi.stubEnv('OPENAI_API_KEY', 'test')
 
@@ -21,16 +21,16 @@ vi.mock('@langchain/community/vectorstores/typeorm', () => {
   }
 })
 
-describe('ChatVectorStore', () => {
+describe('DocumentsVectorStore', () => {
   let moduleRef: TestingModule
-  let chatVectorStore: ChatVectorStore
+  let documentsVectorStore: DocumentsVectorStore
 
   beforeEach(async () => {
     moduleRef = await Test.createTestingModule({
-      providers: [ChatVectorStore],
+      providers: [DocumentsVectorStore],
     }).compile()
 
-    chatVectorStore = moduleRef.get(ChatVectorStore)
+    documentsVectorStore = moduleRef.get(DocumentsVectorStore)
   })
 
   afterEach(async () => {
@@ -38,15 +38,15 @@ describe('ChatVectorStore', () => {
   })
 
   test('should be defined', () => {
-    expect(chatVectorStore).toBeDefined()
+    expect(documentsVectorStore).toBeDefined()
   })
 
   describe('onModuleInit', () => {
     test('should initialize the vector store', async () => {
-      await chatVectorStore.onModuleInit()
+      await documentsVectorStore.onModuleInit()
 
-      expect(chatVectorStore.retriever).toBeDefined()
-      expect(chatVectorStore.embeddings).toBeDefined()
+      expect(documentsVectorStore.retriever).toBeDefined()
+      expect(documentsVectorStore.embeddings).toBeDefined()
     })
   })
 
@@ -58,14 +58,14 @@ describe('ChatVectorStore', () => {
         }),
       ]
 
-      await chatVectorStore.onModuleInit()
-      await chatVectorStore.addDocuments(documents)
+      await documentsVectorStore.onModuleInit()
+      await documentsVectorStore.addDocuments(documents)
 
-      // @ts-expect-error Mocking private method
-      // eslint-disable-next-line @typescript-eslint/unbound-method
-      expect(chatVectorStore.vectorStore.addDocuments).toHaveBeenCalledWith(
-        documents
-      )
+      expect(
+        // @ts-expect-error Mocking private method
+        // eslint-disable-next-line @typescript-eslint/unbound-method
+        documentsVectorStore.vectorStore.addDocuments
+      ).toHaveBeenCalledWith(documents)
     })
   })
 })
