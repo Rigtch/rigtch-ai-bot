@@ -4,6 +4,7 @@ import { Collection, type Message } from 'discord.js'
 
 import { ChannelMessagesHistory } from '../decorators'
 import {
+  TextMessageGuard,
   MessageFromRestrictedChannelGuard,
   MessageFromUserGuard,
 } from '../guards'
@@ -16,7 +17,11 @@ export class BotChatGateway {
   constructor(private readonly chatService: ChatService) {}
 
   @On('messageCreate')
-  @UseGuards(MessageFromUserGuard, MessageFromRestrictedChannelGuard)
+  @UseGuards(
+    MessageFromUserGuard,
+    MessageFromRestrictedChannelGuard,
+    TextMessageGuard
+  )
   async onMessageCreate(
     @MessageEvent() message: Message<true>,
     @ChannelMessagesHistory()

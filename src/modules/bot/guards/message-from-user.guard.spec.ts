@@ -1,14 +1,24 @@
 import type { ExecutionContext } from '@nestjs/common'
+import { Test, type TestingModule } from '@nestjs/testing'
 
 import { MessageFromUserGuard } from './message-from-user.guard'
 
 import { messageMockFactory } from '@common/mocks'
 
 describe('MessageFromUserGuard', () => {
+  let moduleRef: TestingModule
   let messageFromUserGuard: MessageFromUserGuard
 
-  beforeEach(() => {
-    messageFromUserGuard = new MessageFromUserGuard()
+  beforeEach(async () => {
+    moduleRef = moduleRef = await Test.createTestingModule({
+      providers: [MessageFromUserGuard],
+    }).compile()
+
+    messageFromUserGuard = moduleRef.get(MessageFromUserGuard)
+  })
+
+  afterEach(async () => {
+    await moduleRef.close()
   })
 
   test('should be defined', () => {
