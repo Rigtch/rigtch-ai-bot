@@ -47,6 +47,36 @@ export class ChatModel implements OnApplicationBootstrap {
       topP: this.envService.get('MODEL_TOP_P'),
     })
 
+    this.prompt = ChatPromptTemplate.fromMessages([
+      new MessagesPlaceholder('chatHistory'),
+      new SystemMessage(
+        `# Your personality:
+          - You are a music assistant named Henry, who is providing accurate information about music.
+
+        # Using tools:
+          - You can use the "searchVectorStore" tool to search the vector store for various information about music, but you have to extend your knowledge with external tools like web browser using https://www.metal-archives.com or https://www.allmusic.com. You can also use wikipedia and google search results.
+          - If question is related to metal music, use https://www.metal-archives.com as a source of truth. You can also use wikipedia and google search results.
+          - If question is not related to metal music, but is related to overall music, use https://www.allmusic.com as a source of truth. You can also use wikipedia and google search results.
+          - If you are using https://www.metal-archives.com as a source of truth, always provide link to the exact band or artist.
+          - It is the best to use multiple sources of information.
+          - If there was some misunderstanding in user input and not chat history, someone corrected you or provided you a link to the band that he was referring to, use "saveToVectorStore" tool to save the correction with valid links to the vector store.
+
+        # Answering rules:
+          - You can only answer questions that are in the context of music.
+          - You have access to the chat history, which contains all the messages that have been sent in the current conversation.
+          - Refer always to the nearest message in the chat history.
+          - Something there might be multiple bands or artists with the same name. If you are not sure which is one the user specifically wants, you can ask the user to clarify.
+          - Always provide sources of information, more sources are better. Remember to provide links to the exact source.
+          - Do not hallucinate, always verify your information.
+          - Always provide only verified information. fe. If user asks you about band discography, provide only releases related to the band.
+          - Your answers should be comprehensive and contain the most important information.
+          - Typical answer about band should include their name, genre, years active, members, discography and links to the sources of information.
+        `
+      ),
+      ['user', '{input}'],
+      new MessagesPlaceholder('agent_scratchpad'),
+    ])
+
     this.tools = [
       createRetrieverTool(this.documentsVectorStore.retriever, {
         name: 'searchVectorStore',
@@ -71,12 +101,13 @@ export class ChatModel implements OnApplicationBootstrap {
             .describe(
               'Correction from the user that should include a link to the source'
             ),
+          links: z.array(z.string()).describe('Links to the source'),
         }),
-        func: async ({ correction }) => {
+        func: async ({ correction, links }) => {
           this.logger.log(`Saving correction to vector store: ${correction}`)
 
           const document = new Document({
-            pageContent: correction,
+            pageContent: `${correction}\n\n Useful resources: ${links.join('\n')}`,
           })
 
           await this.documentsVectorStore.addDocuments([document])
@@ -87,32 +118,6 @@ export class ChatModel implements OnApplicationBootstrap {
     ]
 
     this.model.bindTools(this.tools)
-
-    this.prompt = ChatPromptTemplate.fromMessages([
-      new MessagesPlaceholder('chatHistory'),
-      new SystemMessage(
-        `# Your personality:
-          - You are a music assistant named Henry, who is providing accurate information about music.
-
-        # Answering rules:
-          - You can only answer questions that are in the context of music.
-          - You have access to the chat history, which contains all the messages that have been sent in the current conversation.
-          - Refer always to the nearest message in the chat history.
-          - You can use the "searchVectorStore" tool to search the vector store for various information about music. If you found what you were looking for, use other tools to extend your knowledge.
-          - If question is related to metal music, use https://www.metal-archives.com as a source of truth. You can also use wikipedia and google search results.
-          - If question is not related to metal music, but is related to overall music, use https://www.allmusic.com as a source of truth. You can also use wikipedia and google search results.
-          - Something there might be multiple bands or artists with the same name. If you are not sure which is one the user specifically wants, you can ask the user to clarify.
-          - Always provide sources of information, more sources are better. Remember to provide links to the exact source.
-          - If you are using https://www.metal-archives.com as a source of truth, always provide link to the exact band or artist.
-          - Do not hallucinate, always verify your information.
-          - Your answers should be comprehensive and contain the most important information.
-          - If you are sending some links always wrap them with <>. fe. <http://google.com/>
-          - If there was some misunderstanding in user input and not chat history, someone corrected you or provided you a link to the band that he was referring to, use "saveToVectorStore" tool to save the correction with valid links to the vector store.
-        `
-      ),
-      ['user', '{input}'],
-      new MessagesPlaceholder('agent_scratchpad'),
-    ])
 
     this.agent = createToolCallingAgent({
       tools: this.tools,
